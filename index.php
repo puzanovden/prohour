@@ -1,10 +1,19 @@
 <?php
+session_start();
 
-require_once "classes/Page_.php";
+if (isset($_GET['lang'])) {
+    $_SESSION['lang'] = $_GET['lang'];
+    header("Location: index.php");
+    exit;
+}
 
-$page = new Page(
-    "Головна сторінка",
-    "Ласкаво просимо до системи ProHour."
-);
+$currentLang = $_SESSION['lang'] ?? 'uk';
 
-$page->render();
+require_once "classes/Translator.php";
+require_once "classes/HomePage.php";
+
+$translator = new Translator($currentLang);
+
+$homePage = new HomePage($translator->get('home_title'), $translator);
+
+$homePage->render();
