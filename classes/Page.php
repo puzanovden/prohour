@@ -25,7 +25,7 @@ class Page
     <title>{$this->title}</title>
     <link rel="stylesheet" href="css/style.css">
 </head>
-<body>
+<body id="for-whom">
     <div class="bg-blur blur-1"></div>
     <div class="bg-blur blur-2"></div>
 
@@ -35,10 +35,10 @@ class Page
         </a>
 
         <nav>
-            <a href="#">{$this->t->get('nav_features')}</a>
-            <a href="#">{$this->t->get('nav_for_whom')}</a>
-            <a href="#">{$this->t->get('nav_how')}</a>
-            <a href="#">{$this->t->get('nav_analytics')}</a>
+            <a href="index.php#for-whom">{$this->t->get('nav_for_whom')}</a>
+            <a href="index.php#features">{$this->t->get('nav_features')}</a>
+            <a href="index.php#workflow">{$this->t->get('nav_how')}</a>
+            <a href="index.php#analytics">{$this->t->get('nav_analytics')}</a>
         </nav>
 
         <div class="lang-switch">

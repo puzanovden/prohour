@@ -30,7 +30,7 @@ class HomePage extends Page
             </div>
         </section>
 
-        <section class="features reveal">
+        <section id="features" class="features reveal">
             <div class="section-header">
                 <div class="section-badge">{$this->t->get('features_badge')}</div>
                 <h2>{$this->t->get('features_h2')}</h2>
@@ -59,7 +59,7 @@ class HomePage extends Page
             </div>
         </section>
 
-        <section class="workflow reveal">
+        <section id="workflow" class="workflow reveal">
             <div class="section-header">
                 <div class="section-badge">{$this->t->get('wf_badge')}</div>
                 <h2>{$this->t->get('wf_h2')}</h2>
@@ -84,7 +84,7 @@ class HomePage extends Page
             </div>
         </section>
 
-        <section class="stats reveal">
+        <section id="analytics" class="stats reveal">
             <div class="stats-grid">
                 <div class="stat-card">
                     <div class="stat-value">124h</div>
