@@ -51,7 +51,9 @@ class Page
         </div>
 
         <div class="user-panel">
-            <div class="user-status">{$this->t->get('status_online')}</div>
+                <a href="tasks.php" class="user-status">
+                    {$this->t->get('status_online')}
+                </a>
             <div class="user-avatar">D</div>
         </div>
     </header>
