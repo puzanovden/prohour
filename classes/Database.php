@@ -59,7 +59,7 @@ class Database
 
                         accumulated_time INTEGER DEFAULT 0,
 
-                        last_started_at INTEGER DEFAULT 0
+                        last_started_at INTEGER DEFAULT NULL
                     );
                 ";
 

@@ -1,4 +1,5 @@
 <?php
+
 session_start();
 
 if (isset($_GET['lang'])) {
@@ -10,75 +11,146 @@ if (isset($_GET['lang'])) {
 $currentLang = $_SESSION['lang'] ?? 'uk';
 
 require_once "classes/Translator.php";
+require_once "classes/Database.php";
+require_once "classes/TaskRepository.php";
+require_once "classes/TasksPage.php";
+
 $translator = new Translator($currentLang);
 
+$db = new Database();
+$db->connect();
+$db->createTables();
 
-if (!isset($_SESSION['tasks'])) {
-    $_SESSION['tasks'] = [];
-}
+$taskRepository = new TaskRepository(
+    $db->getConnection()
+);
 
-// Обробка POST-запитів (зміна стану задач)
+// Обробка POST-запитів
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+
     $action = $_POST['action'] ?? '';
     $taskId = $_POST['task_id'] ?? '';
 
-    if ($action === 'create' && !empty($_POST['task_name'])) {
-        $newId = uniqid('task_');
-        $_SESSION['tasks'][$newId] = [
-            'id' => $newId,
-            'name' => htmlspecialchars($_POST['task_name']),
-            'status' => 'paused',
-            'accumulated_time' => 0.0,
-            'last_started_at' => null
-        ];
+    switch ($action) {
+
+        case 'create':
+
+            if (!empty($_POST['task_name'])) {
+
+                $taskName = htmlspecialchars(
+                    trim($_POST['task_name'])
+                );
+
+                if ($taskName !== '') {
+                    $taskRepository->createTask($taskName);
+                }
+            }
+
+            break;
+
+        case 'play':
+
+            if ($taskId !== '') {
+
+                $task = $taskRepository->getTaskById($taskId);
+
+                if (
+                    $task
+                    &&
+                    $task['status'] !== 'active'
+                ) {
+                    $taskRepository->playTask($taskId);
+                }
+            }
+
+            break;
+
+        case 'pause':
+
+            if ($taskId !== '') {
+
+                $task = $taskRepository->getTaskById($taskId);
+
+                if (
+                    $task
+                    &&
+                    $task['status'] === 'active'
+                ) {
+                    $taskRepository->pauseTask($taskId);
+                }
+            }
+
+            break;
+
+        case 'complete':
+
+            if ($taskId !== '') {
+
+                $task = $taskRepository->getTaskById($taskId);
+
+                if (
+                    $task
+                    &&
+                    $task['status'] !== 'completed'
+                ) {
+                    $taskRepository->completeTask($taskId);
+                }
+            }
+
+            break;
+
+        case 'delete':
+
+            if ($taskId !== '') {
+
+                $task = $taskRepository->getTaskById($taskId);
+
+                if ($task) {
+                    $taskRepository->deleteTask($taskId);
+                }
+            }
+
+            break;
+
+        case 'edit':
+
+            if (
+                $taskId !== ''
+                &&
+                !empty($_POST['new_name'])
+            ) {
+
+                $task = $taskRepository->getTaskById($taskId);
+
+                $newName = htmlspecialchars(
+                    trim($_POST['new_name'])
+                );
+
+                if (
+                    $task
+                    &&
+                    $newName !== ''
+                ) {
+                    $taskRepository->editTask(
+                        $taskId,
+                        $newName
+                    );
+                }
+            }
+
+            break;
     }
 
-    // Обробка існуючих задач
-    if ($taskId !== '' && isset($_SESSION['tasks'][$taskId])) {
-        $task = &$_SESSION['tasks'][$taskId];
-
-        switch ($action) {
-            case 'play':
-                if ($task['status'] !== 'active') {
-                    $task['status'] = 'active';
-                    $task['last_started_at'] = time();
-                }
-                break;
-
-            case 'pause':
-                if ($task['status'] === 'active') {
-                    $task['status'] = 'paused';
-                    $task['accumulated_time'] += (time() - $task['last_started_at']);
-                    $task['last_started_at'] = null;
-                }
-                break;
-
-            case 'complete':
-                if ($task['status'] === 'active') {
-                    $task['accumulated_time'] += (time() - $task['last_started_at']);
-                }
-                $task['status'] = 'completed';
-                $task['last_started_at'] = null;
-                break;
-
-            case 'delete':
-                unset($_SESSION['tasks'][$taskId]);
-                break;
-                
-            case 'edit':
-                if (!empty($_POST['new_name'])) {
-                    $task['name'] = htmlspecialchars($_POST['new_name']);
-                }
-                break;
-        }
-    }
-    
-    // Перенаправлення на ту саму сторінку (щоб уникнути повторної відправки форми при F5)
     header("Location: tasks.php");
     exit;
 }
 
-require_once "classes/TasksPage.php";
+$tasks = $taskRepository->getTasks();
 
-$page = new TasksPage($translator->get('tasks_title'), $translator, $_SESSION['tasks']);
+$page = new TasksPage(
+    $translator->get('tasks_title'),
+    $translator,
+    $tasks
+);
+
 $page->render();

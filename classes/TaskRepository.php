@@ -26,14 +26,14 @@ class TaskRepository
                         :name,
                         'paused',
                         0,
-                        0
+                        NULL
                     )
             ";
 
             $stmt = $this->connection->prepare($sql);
 
             $stmt->execute([
-                ':title' => $title
+                ':name' => $title
             ]);
 
    
@@ -117,10 +117,14 @@ class TaskRepository
     {
         $task = $this->getTaskById($id);
 
-        $elapsed =
-            $task['accumulated_time']
-            +
-            (time() - $task['last_started_at']);
+        $elapsed = $task['accumulated_time'];
+
+        if ($task['last_started_at'] !== null) {
+
+            $elapsed += (
+                time() - $task['last_started_at']
+            );
+        }
 
         $sql = "
             UPDATE tasks
@@ -169,5 +173,3 @@ class TaskRepository
         ]);
     }
 }
-
-

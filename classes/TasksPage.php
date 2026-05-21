@@ -46,7 +46,14 @@ HTML;
             echo '<h2>' . $this->t->get('in_progress') . '</h2>';
             echo '<div class="active-grid">';
             foreach ($activeTasks as $id => $task) {
-                $currentElapsed = $task['accumulated_time'] + ($this->serverTime - $task['last_started_at']);
+                $currentElapsed = $task['accumulated_time'];
+
+                if ($task['last_started_at'] !== null) {
+
+                    $currentElapsed += (
+                        $this->serverTime - $task['last_started_at']
+                    );
+                }
                 $formattedTime = $this->formatTime($currentElapsed);
                 
                 echo <<<HTML
@@ -56,7 +63,7 @@ HTML;
                         {$formattedTime}
                     </div>
                     <form method="POST">
-                        <input type="hidden" name="task_id" value="{$id}">
+                        <input type="hidden" name="task_id" value="{$task['id']}">
                         <input type="hidden" name="action" value="pause">
                         <button type="submit" class="control-btn pause-btn">{$this->t->get('btn_pause')}</button>
                     </form>
@@ -73,10 +80,17 @@ HTML;
         if (empty($this->tasks)) {
             echo '<p class="empty-msg">' . $this->t->get('empty_list') . '</p>';
         } else {
-            foreach ($this->tasks as $id => $task) {
+            foreach ($this->tasks as $task) {
                 $elapsed = $task['accumulated_time'];
-                if ($task['status'] === 'active') {
-                    $elapsed += ($this->serverTime - $task['last_started_at']);
+                if (
+                    $task['status'] === 'active'
+                    &&
+                    $task['last_started_at'] !== null
+                ) {
+
+                    $elapsed += (
+                        $this->serverTime - $task['last_started_at']
+                    );
                 }
                 $formattedTime = $this->formatTime($elapsed);
                 
@@ -96,11 +110,11 @@ HTML;
 
                 if ($task['status'] !== 'completed') {
                     if ($task['status'] === 'paused') {
-                        echo "<form method='POST'><input type='hidden' name='task_id' value='{$id}'><input type='hidden' name='action' value='play'><button type='submit' class='icon-btn' title='{$this->t->get('btn_play')}'>▶</button></form>";
+                        echo "<form method='POST'><input type='hidden' name='task_id' value='{$task['id']}'><input type='hidden' name='action' value='play'><button type='submit' class='icon-btn' title='{$this->t->get('btn_play')}'>▶</button></form>";
                     } else {
-                        echo "<form method='POST'><input type='hidden' name='task_id' value='{$id}'><input type='hidden' name='action' value='pause'><button type='submit' class='icon-btn' title='{$this->t->get('btn_pause')}'>⏸</button></form>";
+                        echo "<form method='POST'><input type='hidden' name='task_id' value='{$task['id']}'><input type='hidden' name='action' value='pause'><button type='submit' class='icon-btn' title='{$this->t->get('btn_pause')}'>⏸</button></form>";
                     }
-                    echo "<form method='POST'><input type='hidden' name='task_id' value='{$id}'><input type='hidden' name='action' value='complete'><button type='submit' class='icon-btn' title='Завершити'>✔</button></form>";
+                    echo "<form method='POST'><input type='hidden' name='task_id' value='{$task['id']}'><input type='hidden' name='action' value='complete'><button type='submit' class='icon-btn' title='Завершити'>✔</button></form>";
                 }
 
                 echo <<<HTML
@@ -108,13 +122,13 @@ HTML;
                             <button class="icon-btn dropbtn">⋮</button>
                             <div class="dropdown-content">
                                 <form method="POST" class="edit-form">
-                                    <input type="hidden" name="task_id" value="{$id}">
+                                    <input type="hidden" name="task_id" value="{$task['id']}">
                                     <input type="hidden" name="action" value="edit">
                                     <input type="text" name="new_name" placeholder="{$this->t->get('ph_new_name')}" required>
                                     <button type="submit">{$this->t->get('btn_edit')}</button>
                                 </form>
                                 <form method="POST">
-                                    <input type="hidden" name="task_id" value="{$id}">
+                                    <input type="hidden" name="task_id" value="{$task['id']}">
                                     <input type="hidden" name="action" value="delete">
                                     <button type="submit" class="danger-txt">{$this->t->get('btn_delete')}</button>
                                 </form>
