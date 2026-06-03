@@ -26,18 +26,37 @@ class RegexHelper {
         return (bool)preg_match($pattern, $date);
     }
 
-    public static function analyzeLogFile(string $filePath): array {
-        if (!file_exists($filePath)) {
-            return ['time' => '-', 'action' => 'Лог-файл відсутній'];
-        }
-        $content = file_get_contents($filePath);
-        preg_match_all("/\[(.*?)\]\s(.*)/", $content, $matches, PREG_SET_ORDER);
-        if (empty($matches)) {
-            return ['time' => '-', 'action' => 'Дій не зафіксовано'];
-        }
-        $lastLog = end($matches);
-        return ['time' => $lastLog[1], 'action' => trim($lastLog[2])];
+ public static function analyzeLogFile(string $filePath): array {
+    if (!file_exists($filePath)) {
+        return ['time' => '-', 'action' => 'Лог-файл відсутній', 'login_time' => '-'];
     }
+    
+    $content = file_get_contents($filePath);
+    preg_match_all("/\[(.*?)\]\s(.*)/", $content, $matches, PREG_SET_ORDER);
+    
+    if (empty($matches)) {
+        return ['time' => '-', 'action' => 'Дій не зафіксовано', 'login_time' => '-'];
+    }
+    $lastLog = end($matches);
+    $lastActionTime = $lastLog[1];
+    $lastActionName = trim($lastLog[2]);
+    $lastLoginTime = '-';
+    for ($i = count($matches) - 1; $i >= 0; $i--) {
+        if (preg_match("/(Вхід|Авторизація|Login|Авторизовано)/iu", $matches[$i][2])) {
+            $lastLoginTime = $matches[$i][1];
+            break; 
+        }
+    }
+    if ($lastLoginTime === '-') {
+        $lastLoginTime = $lastActionTime;
+    }
+    
+    return [
+        'time' => $lastActionTime,
+        'action' => $lastActionName,
+        'login_time' => $lastLoginTime
+    ];
+}
 
     public static function manageTaskScheduler(string $configPath, string $taskName, string $action, string $param = ''): void {
         $config = file_exists($configPath) ? file_get_contents($configPath) : "";

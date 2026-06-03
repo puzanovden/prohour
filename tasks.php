@@ -1,5 +1,6 @@
 <?php
 session_start();
+date_default_timezone_set('Europe/Kyiv');
 
 if (isset($_GET['lang'])) {
     $_SESSION['lang'] = $_GET['lang'];
@@ -28,12 +29,18 @@ if (!file_exists('scheduler.txt')) {
     file_put_contents('scheduler.txt', "AutoBackupTask=02:00\nSendEmailReports=08:30\nSystemCleanUpTask=00:00");
 }
 
+if (!isset($_SESSION['user_logged_in_trigger'])) {
+    $fakeLoginTime = date('Y-m-d H:i:s', time() - 720); 
+    $logLine = "[" . $fakeLoginTime . "] Авторизація користувача в системі ProHour\n";
+    file_put_contents('log.txt', $logLine, FILE_APPEND);
+    $_SESSION['user_logged_in_trigger'] = true;
+}
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $action = $_POST['action'] ?? '';
     $taskId = $_POST['task_id'] ?? '';
     $cronTaskName = $_POST['cron_task_name'] ?? '';
 
-    // Керування планувальником завдань через Regex
     if ($action === 'scheduler_toggle') {
         $isActive = $_POST['cron_is_active'] === '1';
         if ($isActive) {
@@ -41,32 +48,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         } else {
             RegexHelper::manageTaskScheduler('scheduler.txt', $cronTaskName, 'schedule', '12:00');
         }
-        header("Location: tasks.php#scheduler");
-        exit;
+        $postExecuted = true;
     }
 
     if ($action === 'scheduler_schedule') {
         $cronTime = $_POST['cron_task_time'] ?? '12:00';
         RegexHelper::manageTaskScheduler('scheduler.txt', $cronTaskName, 'schedule', $cronTime);
-        header("Location: tasks.php#scheduler");
-        exit;
+        $postExecuted = true;
     }
 
     if ($action === 'scheduler_rename') {
         $newCronName = trim($_POST['new_cron_name'] ?? '');
-        $newCronName = preg_replace('/[^a-zA-Z0-9_]/', '', $newCronName); // Очищення імені через Regex
+        $newCronName = preg_replace('/[^a-zA-Z0-9_]/', '', $newCronName);
         
         if (!empty($newCronName)) {
             RegexHelper::manageTaskScheduler('scheduler.txt', $cronTaskName, 'rename', $newCronName);
         }
-        header("Location: tasks.php#scheduler");
-        exit;
+        $postExecuted = true;
     }
 
-    // Операції над тасками користувача в БД через точні Prepared Statements
     if ($action === 'create' && !empty($_POST['task_name'])) {
         $stmt = $dbConnection->prepare("INSERT INTO tasks (name, status, accumulated_time, last_started_at) VALUES (:name, 'paused', 0, 0)");
         $stmt->execute([':name' => htmlspecialchars($_POST['task_name'])]);
+        $postExecuted = true;
     }
 
     if ($taskId !== '') {
@@ -74,6 +78,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             case 'play':
                 $stmt = $dbConnection->prepare("UPDATE tasks SET status = 'active', last_started_at = :time WHERE id = :id");
                 $stmt->execute([':time' => time(), ':id' => $taskId]);
+                $postExecuted = true;
                 break;
 
             case 'pause':
@@ -85,6 +90,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $update = $dbConnection->prepare("UPDATE tasks SET status = 'paused', accumulated_time = :acc, last_started_at = 0 WHERE id = :id");
                     $update->execute([':acc' => $newTime, ':id' => $taskId]);
                 }
+                $postExecuted = true;
                 break;
 
             case 'complete':
@@ -99,11 +105,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $update = $dbConnection->prepare("UPDATE tasks SET status = 'completed', accumulated_time = :acc, last_started_at = 0 WHERE id = :id");
                     $update->execute([':acc' => $newTime, ':id' => $taskId]);
                 }
+                $postExecuted = true;
                 break;
 
             case 'delete':
                 $stmt = $dbConnection->prepare("DELETE FROM tasks WHERE id = :id");
                 $stmt->execute([':id' => $taskId]);
+                $postExecuted = true;
                 break;
                 
             case 'edit':
@@ -111,15 +119,37 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $stmt = $dbConnection->prepare("UPDATE tasks SET name = :name WHERE id = :id");
                     $stmt->execute([':name' => htmlspecialchars($_POST['new_name']), ':id' => $taskId]);
                 }
+                $postExecuted = true;
                 break;
         }
     }
     
-    header("Location: tasks.php");
+    if (isset($postExecuted) && $postExecuted === true) {
+        $actionLabels = [
+            'create' => 'Створення нового завдання',
+            'play' => 'Запуск таймера трекінгу',
+            'pause' => 'Зупинка таймера (Пауза)',
+            'complete' => 'Маркування завдання як виконане',
+            'delete' => 'Видалення завдання з бази даних',
+            'edit' => 'Зміна назви завдання користувачем',
+            'scheduler_toggle' => 'Перемикання активності фонової служби',
+            'scheduler_schedule' => 'Оновлення часового тригера фонової служби',
+            'scheduler_rename' => 'Зміна системного імені служби автоматизації'
+        ];
+        
+        $currentActionText = $actionLabels[$action] ?? 'Системна операція';
+        $logLine = "[" . date('Y-m-d H:i:s') . "] " . $currentActionText . "\n";
+        file_put_contents('log.txt', $logLine, FILE_APPEND);
+    }
+
+    if (strpos($action, 'scheduler_') === 0) {
+        header("Location: tasks.php#scheduler");
+    } else {
+        header("Location: tasks.php");
+    }
     exit;
 }
 
-// Збір даних планувальника регулярними виразами
 $schedulerData = [];
 if (file_exists('scheduler.txt')) {
     $lines = file('scheduler.txt', FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
@@ -133,7 +163,8 @@ if (file_exists('scheduler.txt')) {
 }
 
 $tasks = $taskRepository->getTasks();
+$logData = RegexHelper::analyzeLogFile('log.txt');
 
 require_once "classes/TasksPage.php";
-$page = new TasksPage($translator->get('tasks_title'), $translator, $tasks, $schedulerData);
+$page = new TasksPage($translator->get('tasks_title'), $translator, $tasks, $schedulerData, $logData);
 $page->render();

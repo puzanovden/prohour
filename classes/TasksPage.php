@@ -7,13 +7,15 @@ class TasksPage extends Page
     private $tasks;
     private $serverTime;
     private array $schedulerTasks;
+    private array $logData; 
 
-    public function __construct($title, Translator $t, $tasks, array $schedulerTasks = [])
+    public function __construct($title, Translator $t, $tasks, array $schedulerTasks = [], array $logData = [])
     {
         parent::__construct($title, $t);
         $this->tasks = $tasks;
         $this->serverTime = time(); 
         $this->schedulerTasks = $schedulerTasks;
+        $this->logData = $logData;
     }
 
     private function formatTime($seconds)
@@ -28,15 +30,33 @@ class TasksPage extends Page
     {
         echo '<main class="tasks-main">';
         echo '<section id="scheduler" class="box-panel">';
-        echo '<div class="section-badge" style="background: #10b981; color: white;">PRO Інструменти</div>';
-        echo '<h2 style="margin-bottom: 10px;">Фонові служби автоматизації</h2>';
-        echo '<p style="font-size:15px; color:#64748b; margin-bottom: 30px;">Конфігурація та розклад системних тригерів, автоматичного резервного копіювання бази даних та генерації звітів.</p>';
+        
+        // =========================================================================
+        // ОНОВЛЕНИЙ ФЛЕКС-КОНТЕЙНЕР ШАПКИ (ВИПРАВЛЕННЯ ЗМІЩЕННЯ ПРАВОРУЧ)
+        // =========================================================================
+        echo '<div style="display: flex; justify-content: flex-start; align-items: flex-start; flex-wrap: wrap; gap: 40px; margin-bottom: 30px;">';
+        echo '  <div style="flex: 1; min-width: 280px;">';
+        echo '      <div class="section-badge" style="background: #10b981; color: white;">PRO Інструменти</div>';
+        echo '      <h2 style="margin-bottom: 10px;">Фонові служби автоматизації</h2>';
+        echo '      <p style="font-size:15px; color:#64748b; margin: 0;">Конфігурація та розклад системних тригерів, автоматичного резервного копіювання бази даних та генерації звітів.</p>';
+        echo '  </div>';
+ 
+        if (!empty($this->logData) && $this->logData['time'] !== '-') {
+            echo '  <div style="background: #f8fafc; border: 1px solid #e2e8f0; padding: 15px 20px; border-radius: 20px; font-size: 13px; color: #475569; min-width: 320px; line-height: 1.6; box-shadow: 0 4px 12px rgba(0,0,0,0.01); margin-top: 10px;">';
+            echo '      <span style="font-weight: 700; color: #1e293b; display: block; margin-bottom: 5px; font-size: 14px;">🔑 Моніторинг доступу (Cron)</span>';
+            echo '      • Останній вхід: <span style="color: #0f172a; font-weight: 600;">' . htmlspecialchars($this->logData['login_time']) . '</span><br>';
+            echo '      • Остання дія: <span style="color: #0f172a; font-weight: 600;">' . htmlspecialchars($this->logData['time']) . '</span> <span style="font-size: 11px; color: #94a3b8;">(' . htmlspecialchars($this->logData['action']) . ')</span>';
+            echo '  </div>';
+        }
+        
+        echo '</div>'; // Кінець оновленої шапки
+        // =========================================================================
         
         echo '<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 28px; margin-bottom: 10px;">';
         
         foreach ($this->schedulerTasks as $name => $info) {
             $statusBadgeColor = $info['active'] ? 'background: #dcfce7; color: #16a34a;' : 'background: #f1f5f9; color: #475569;';
-            $statusText = $info['active'] ? '🟢 Активна' : '⚪ Вимкнена';
+            $statusText = $info['active'] ? '🟢 Active' : '⚪ Disabled';
             $toggleBtnText = $info['active'] ? 'Вимкнути' : 'Увімкнути';
             $cronDisplayTime = ($info['time'] === 'Вимкнено') ? '00:00' : $info['time'];
             

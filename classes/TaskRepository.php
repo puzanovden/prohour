@@ -12,15 +12,24 @@ class TaskRepository {
     }
 
     public function batchInsertTasks(array $tasks): bool {
-        $stmt = $this->db->prepare("INSERT INTO tasks (name, status, accumulated_time, last_started_at) VALUES (:name, :status, 0, 0)");
-        
-        foreach ($tasks as $task) {
-            $stmt->execute([
-                ':name' => $task['name'],
-                ':status' => $task['status'] ?? 'paused'
-            ]);
+        try {
+            $this->db->beginTransaction(); 
+
+            $stmt = $this->db->prepare("INSERT INTO tasks (name, status, accumulated_time, last_started_at) VALUES (:name, :status, 0, 0)");
+            
+            foreach ($tasks as $task) {
+                $stmt->execute([
+                    ':name' => $task['name'],
+                    ':status' => $task['status'] ?? 'paused'
+                ]);
+            }
+
+            $this->db->commit(); 
+            return true;
+        } catch (\PDOException $e) {
+            $this->db->rollBack(); 
+            return false;
         }
-        return true;
     }
 
     public function getTasks(): array {
