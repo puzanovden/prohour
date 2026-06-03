@@ -8,7 +8,16 @@ if (isset($_GET['lang'])) {
     exit;
 }
 
+
+
 $currentLang = $_SESSION['lang'] ?? 'uk';
+
+//☺
+if (!isset($_SESSION['user_id'])) {
+    header("Location: login.php");
+    exit;
+}
+//☺
 
 require_once "classes/Translator.php";
 require_once "classes/Database.php";

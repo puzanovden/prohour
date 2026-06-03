@@ -720,3 +720,16 @@ footer{
 
 
 .lang-switch a.lang-btn { text-decoration: none; }
+
+
+.logout-link {
+    margin-left: 10px;
+    color: #5d6f66;
+    font-size: 14px;
+    text-decoration: none;
+    font-weight: 600;
+}
+
+.logout-link:hover {
+    color: #10231c;
+}
