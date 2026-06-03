@@ -40,6 +40,14 @@ class Database
                     accumulated_time INTEGER DEFAULT 0,
                     last_started_at INTEGER DEFAULT 0
                 );
+
+                CREATE TABLE IF NOT EXISTS users
+                    (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        email TEXT NOT NULL UNIQUE,
+                        password TEXT NOT NULL,
+                        name TEXT NOT NULL
+                    );
             ";
 
             $this->connection->exec($sql);
