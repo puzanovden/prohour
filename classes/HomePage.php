@@ -4,13 +4,29 @@ require_once "Page.php";
 
 class HomePage extends Page
 {
-    public function __construct($title, Translator $t)
+    private array $labStatus = [];
+    public function __construct($title, Translator $t, array $labStatus = [])
     {
         parent::__construct($title, $t);
+        $this->labStatus = $labStatus;
     }
 
     public function renderBody()
     {
+        $alertHtml = "";
+        if (!empty($this->labStatus['errors'])) {
+            $alertHtml .= "<div style='background:#fdebd0; color:#b03a2e; padding:10px; border-radius:5px; margin-bottom:15px; font-weight:bold;'>";
+            foreach ($this->labStatus['errors'] as $err) {
+                $alertHtml .= "⚠️ " . htmlspecialchars($err) . "<br>";
+            }
+            $alertHtml .= "</div>";
+        } elseif (isset($this->labStatus['success']) && $this->labStatus['success'] === true) {
+            $alertHtml .= "<div style='background:#d4efdf; color:#196f3d; padding:10px; border-radius:5px; margin-bottom:15px; font-weight:bold;'>";
+            $alertHtml .= "✅ Форма успішно пройшла валідацію регулярними виразами лаби №3!<br>";
+            $alertHtml .= "Остання дія в системі зафіксована о: " . htmlspecialchars($this->labStatus['last_time']);
+            $alertHtml .= "</div>";
+        }
+
         echo <<<HTML
     <main>
         <section class="hero">
@@ -101,15 +117,24 @@ class HomePage extends Page
             </div>
         </section>
 
-        <section class="feedback reveal">
-            <div class="feedback-card">
+        <section id="feedback" class="feedback reveal">
+            <div  class="feedback-card">
                 <div class="section-badge">{$this->t->get('fb_badge')}</div>
                 <h2>{$this->t->get('fb_h2')}</h2>
                 <p>{$this->t->get('fb_p')}</p>
-                <form>
-                    <input type="email" placeholder="{$this->t->get('fb_ph_email')}">
-                    <textarea placeholder="{$this->t->get('fb_ph_msg')}"></textarea>
-                    <button type="button">{$this->t->get('fb_btn')}</button>
+                
+                {$alertHtml}
+
+                <form method="POST" action="index.php#feedback">
+                    <input type="text" name="feedback_email" required placeholder="{$this->t->get('fb_ph_email')}" style="width:100%; margin-bottom:10px; padding:10px;">
+                    
+                    <input type="text" name="feedback_project_url" placeholder="Посилання на ваш репозиторій GitHub (https://...)" style="width:100%; margin-bottom:10px; padding:10px;">
+                    
+                    <input type="text" name="feedback_deadline" placeholder="Бажаний дедлайн у форматі дд/мм/рррр (напр. 02/06/2026)" style="width:100%; margin-bottom:10px; padding:10px;">
+                    
+                    <textarea name="feedback_message" required placeholder="{$this->t->get('fb_ph_msg')}" style="width:100%; margin-bottom:10px; padding:10px;"></textarea>
+                    
+                    <button type="submit">{$this->t->get('fb_btn')}</button>
                 </form>
             </div>
         </section>

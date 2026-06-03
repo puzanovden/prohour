@@ -1,13 +1,18 @@
 <?php
+namespace App\Database;
+
+use PDO;
+use PDOException;
 
 class Database
 {
     private $connection;
 
-    public function connect()
+    public function __construct()
     {
         try
         {
+
             $this->connection = new PDO(
                 "sqlite:" . __DIR__ . "/../database/prohour.db"
             );
@@ -17,19 +22,45 @@ class Database
                 PDO::ERRMODE_EXCEPTION
             );
 
-            //echo "Database connected successfully<br>";
+            $this->connection->beginTransaction();
+
+            $sql = "
+                CREATE TABLE IF NOT EXISTS projects
+                (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    name TEXT NOT NULL,
+                    description TEXT
+                );
+
+                CREATE TABLE IF NOT EXISTS tasks
+                (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    name TEXT NOT NULL,
+                    status TEXT DEFAULT 'paused',
+                    accumulated_time INTEGER DEFAULT 0,
+                    last_started_at INTEGER DEFAULT 0
+                );
+            ";
+
+            $this->connection->exec($sql);
+            $this->connection->commit();
         }
         catch (PDOException $e)
         {
-            die("Connection error: " . $e->getMessage());
+            if ($this->connection && $this->connection->inTransaction()) {
+                $this->connection->rollBack();
+            }
+
+            echo "<div style='color:red; font-weight:bold; padding:20px; background:#fce4e4; border:1px solid red;'>";
+            echo "Повідомлення про неможливість створення бази даних!<br>";
+            echo "Код помилки (SQLSTATE): " . $e->getCode() . "<br>";
+            if ($this->connection) {
+                echo "Деталі помилки: " . implode(", ", $this->connection->errorInfo()) . "<br>";
+            }
+            echo "Системний текст: " . $e->getMessage();
+            echo "</div>";
+            die();
         }
-    }
-
-    public function disconnect()
-    {
-        $this->connection = null;
-
-        //echo "Database connection closed<br>";
     }
 
     public function getConnection()
@@ -37,40 +68,8 @@ class Database
         return $this->connection;
     }
 
-    public function createTables()
-        {
-            try
-            {
-                $sql = "
-                    CREATE TABLE IF NOT EXISTS projects
-                    (
-                        id INTEGER PRIMARY KEY AUTOINCREMENT,
-                        name TEXT NOT NULL,
-                        description TEXT
-                    );
-
-                    CREATE TABLE IF NOT EXISTS tasks
-                    (
-                        id INTEGER PRIMARY KEY AUTOINCREMENT,
-
-                        name TEXT NOT NULL,
-
-                        status TEXT DEFAULT 'paused',
-
-                        accumulated_time INTEGER DEFAULT 0,
-
-                        last_started_at INTEGER DEFAULT 0
-                    );
-                ";
-
-                $this->connection->exec($sql);
-
-                //echo "Tables created successfully<br>";
-            }
-            catch (PDOException $e)
-            {
-                echo "Table creation error: "
-                    . $e->getMessage();
-            }
-        }
+    public function disconnect()
+    {
+        $this->connection = null;
+    }
 }
