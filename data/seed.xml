@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<seed>
+    <user email="olena.petrenko@prohour.test" password="password123">
+        <name>Олена Петренко</name>
+        <project>
+            <client>
+                <name>Навчальний центр "Освіта Плюс"</name>
+                <comment>Клієнт замовив систему для обліку внутрішніх навчальних задач.</comment>
+            </client>
+            <name>Платформа обліку навчальних матеріалів</name>
+            <description>Розробка модуля для керування курсами, завданнями та звітами викладачів.</description>
+            <task status="paused" accumulated_time="3600">
+                <name>Спроєктувати структуру сторінки курсів</name>
+                <comment>Потрібно описати головні блоки інтерфейсу і підготувати базовий макет.</comment>
+            </task>
+            <task status="paused" accumulated_time="1800">
+                <name>Підготувати форму створення навчального завдання</name>
+                <comment>Форма має містити назву, опис, дедлайн і відповідального викладача.</comment>
+            </task>
+        </project>
+        <project>
+            <client>
+                <name>Майстерня "Друк-Сервіс"</name>
+                <comment>Невеликий клієнт, якому потрібен контроль часу виконання замовлень.</comment>
+            </client>
+            <name>Облік замовлень друкарні</name>
+            <description>Міні-система для фіксації задач дизайнерів і операторів друку.</description>
+            <task status="completed" accumulated_time="7200">
+                <name>Створити список типових друкарських робіт</name>
+                <comment>До списку входять візитки, буклети, банери та наліпки.</comment>
+            </task>
+            <task status="paused" accumulated_time="0">
+                <name>Додати екран перегляду витраченого часу</name>
+                <comment>Потрібна таблиця з фільтрацією за проєктом і статусом.</comment>
+            </task>
+        </project>
+    </user>
+
+    <user email="andrii.koval@prohour.test" password="password123">
+        <name>Андрій Коваль</name>
+        <project>
+            <client>
+                <name>Кав'ярня "Ранкова кава"</name>
+                <comment>Клієнт хоче бачити, скільки часу команда витрачає на операційні задачі.</comment>
+            </client>
+            <name>Внутрішній трекер задач кав'ярні</name>
+            <description>Система для обліку підготовки змін, закупівель і технічного обслуговування обладнання.</description>
+            <task status="paused" accumulated_time="2400">
+                <name>Описати список щоденних операційних задач</name>
+                <comment>Потрібно виділити задачі відкриття зміни, закриття зміни та інвентаризації.</comment>
+            </task>
+            <task status="paused" accumulated_time="0">
+                <name>Додати коментарі до задач обслуговування</name>
+                <comment>Коментар має пояснювати, що саме зроблено під час виконання задачі.</comment>
+            </task>
+            <task status="completed" accumulated_time="5400">
+                <name>Підготувати базову аналітику витрат часу</name>
+                <comment>Потрібно показати сумарний час за кожним типом задач.</comment>
+            </task>
+        </project>
+    </user>
+
+    <user email="iryna.shevchenko@prohour.test" password="password123">
+        <name>Ірина Шевченко</name>
+        <project>
+            <client>
+                <name>Студія ремонту "Комфорт Дім"</name>
+                <comment>Клієнт веде декілька паралельних ремонтних об'єктів.</comment>
+            </client>
+            <name>Трекер ремонтних робіт</name>
+            <description>Облік задач майстрів, часу виконання робіт та коротких пояснювальних коментарів.</description>
+            <task status="paused" accumulated_time="1800">
+                <name>Скласти перелік етапів ремонту кімнати</name>
+                <comment>Етапи мають включати демонтаж, підготовку стін, електрику і фінішні роботи.</comment>
+            </task>
+            <task status="paused" accumulated_time="1200">
+                <name>Створити шаблон звіту для клієнта</name>
+                <comment>У звіті потрібно показати виконані задачі та витрачений час.</comment>
+            </task>
+        </project>
+    </user>
+</seed>
