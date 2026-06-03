@@ -16,6 +16,29 @@ class Page
         $activeUa = $this->t->getLang() === 'uk' ? 'active' : '';
         $activeEn = $this->t->getLang() === 'en' ? 'active' : '';
 
+        //☺
+        if (isset($_SESSION['user_id'])) {
+                $userName = $_SESSION['user_name'] ?? 'User';
+                preg_match('/^./u', $userName, $matches);
+                $userLetter = $matches[0] ?? '?';
+
+                $userPanel = "
+                    <div class=\"user-panel\">
+                        <a href=\"tasks.php\" class=\"user-status\">$userName</a>
+                        <div class=\"user-avatar\">$userLetter</div>
+                        <a href=\"logout.php\" class=\"logout-link\">Вийти</a>
+                    </div>
+                ";
+            } else {
+                $userPanel = "
+                    <div class=\"user-panel\">
+                        <a href=\"login.php\" class=\"user-status\">Увійти</a>
+                        <div class=\"user-avatar\">?</div>
+                    </div>
+                ";
+            }
+            //☺
+
         echo <<<HTML
 <!DOCTYPE html>
 <html lang="uk">
@@ -50,12 +73,13 @@ class Page
             </a>
         </div>
 
-        <div class="user-panel">
+        {$userPanel}
+<!--         <div class="user-panel">
                 <a href="tasks.php" class="user-status">
                     {$this->t->get('status_online')}
                 </a>
             <div class="user-avatar">D</div>
-        </div>
+        </div> -->
     </header>
 HTML;
     }
