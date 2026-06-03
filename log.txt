@@ -88,3 +88,15 @@
 2026-04-30 21:22:52 | IP: 127.0.0.1 | Browser: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36
 2026-04-30 21:22:52 | IP: 127.0.0.1 | Browser: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36
 2026-04-30 21:22:58 | IP: 127.0.0.1 | Browser: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36
+[2026-06-02 21:30:38] Відправлено фідбек від alinavlasenko656@gmail.com. Текст: аптм пм ьить
+[2026-06-02 22:02:44] Відправлено фідбек від alinavlasenko656@gmail.com. Текст: Привіт
+[2026-06-02 22:05:01] Відправлено фідбек від alinavlasenko656@gmail.com. Текст: Привіт
+[2026-06-02 22:07:22] Відправлено фідбек від alinavlasenko656@gmail.com. Текст: птптаьрмтрм
+[2026-06-02 22:07:58] Відправлено фідбек від alinavlasenko656@gmail.com. Текст: http://localhost:8000/index.php
+[2026-06-03 01:10:47] Відправлено фідбек від alinavlasenko656@gmail.com. Текст: date_default_timezone_set('Europe/Kyiv');
+[2026-06-03 01:37:37] Відправлено фідбек від alinavlasenko656@gmail.com. Текст: Привіт
+[2026-06-03 01:44:59] Відправлено фідбек від alinavlasenko656@gmail.com. Текст: Привіт
+[2026-06-03 01:46:23] Відправлено фідбек від alinavlasenko656@gmail.com. Текст: аиваррп
+[2026-06-03 11:45:04] Відправлено фідбек від alinavlasenko656@gmail.com. Текст: Привіт
+[2026-06-03 12:10:20] Відправлено фідбек від alinavlasenko656@gmail.com. Текст: Привет
+[2026-06-03 12:41:19] Відправлено фідбек від alinavlasenko656@gmail.com. Текст: привыт
