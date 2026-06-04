@@ -25,6 +25,7 @@ class Page
                 $userPanel = "
                     <div class=\"user-panel\">
                         <a href=\"tasks.php\" class=\"user-status\">$userName</a>
+                        <a href=\"chat.php\" class=\"logout-link\">Чат</a>
                         <div class=\"user-avatar\">$userLetter</div>
                         <a href=\"logout.php\" class=\"logout-link\">Вийти</a>
                     </div>
@@ -90,26 +91,144 @@ HTML;
 
     public function renderFooter()
     {
-        echo <<<HTML
-    <footer>
-        <div>ProHour © 2026</div>
-        <div>Smart Time Tracking System</div>
-    </footer>
+        $realtimeScript = $this->buildRealtimeNotificationScript();
 
-    <script>
-        const reveals = document.querySelectorAll('.reveal');
-        const observer = new IntersectionObserver(entries => {
-            entries.forEach(entry => {
-                if(entry.isIntersecting){
-                    entry.target.classList.add('active');
-                }
+        echo <<<HTML
+        <footer>
+            <div>ProHour © 2026</div>
+            <div>Smart Time Tracking System</div>
+        </footer>
+
+        <div id="realtime-notifications"></div>
+
+        <script>
+            const reveals = document.querySelectorAll('.reveal');
+            const observer = new IntersectionObserver(entries => {
+                entries.forEach(entry => {
+                    if(entry.isIntersecting){
+                        entry.target.classList.add('active');
+                    }
+                });
             });
+            reveals.forEach(el => observer.observe(el));
+        </script>
+
+        {$realtimeScript}
+    </body>
+    </html>
+    HTML;
+    }
+
+    protected function buildRealtimeNotificationScript(): string
+    {
+        if (!isset($_SESSION['user_id'])) {
+            return '';
+        }
+
+        $currentUser = [
+            'id' => $_SESSION['user_id'],
+            'name' => $_SESSION['user_name'] ?? 'User',
+            'email' => $_SESSION['user_email'] ?? '',
+        ];
+
+        $pendingNotification = $_SESSION['pending_notification'] ?? null;
+        unset($_SESSION['pending_notification']);
+
+        $currentUserJson = json_encode(
+            $currentUser,
+            JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT
+        );
+
+        $pendingNotificationJson = json_encode(
+            $pendingNotification,
+            JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT
+        );
+
+        return <<<HTML
+    <script>
+    (function () {
+        const currentUser = {$currentUserJson};
+        const pendingNotification = {$pendingNotificationJson};
+
+        let socket;
+
+        try {
+            socket = new WebSocket('ws://localhost:8080');
+        } catch (error) {
+            console.warn('WebSocket недоступний:', error);
+            return;
+        }
+
+        socket.addEventListener('open', () => {
+            socket.send(JSON.stringify({
+                type: 'auth',
+                user_id: currentUser.id,
+                user_name: currentUser.name,
+                user_email: currentUser.email
+            }));
+
+            if (pendingNotification) {
+                socket.send(JSON.stringify({
+                    type: 'task_notification',
+                    action: pendingNotification.action,
+                    description: pendingNotification.description,
+                    task_id: pendingNotification.task_id
+                }));
+            }
         });
-        reveals.forEach(el => observer.observe(el));
+
+        socket.addEventListener('message', (event) => {
+            const data = JSON.parse(event.data);
+
+            if (data.type === 'task_notification') {
+                showRealtimeNotification(data);
+            }
+        });
+
+        function showRealtimeNotification(data) {
+            const container = getNotificationContainer();
+
+            const notification = document.createElement('div');
+            notification.className = 'realtime-notification';
+
+            const taskPart = data.task_id ? ' · задача #' + data.task_id : '';
+
+            notification.innerHTML =
+                '<strong>Оновлення ProHour</strong><br>' +
+                escapeHtml(data.user_name) + ': ' +
+                escapeHtml(data.description) +
+                escapeHtml(taskPart);
+
+            container.appendChild(notification);
+
+            setTimeout(() => {
+                notification.remove();
+            }, 7000);
+        }
+
+        function getNotificationContainer() {
+            let container = document.getElementById('realtime-notifications');
+
+            if (!container) {
+                container = document.createElement('div');
+                container.id = 'realtime-notifications';
+                document.body.appendChild(container);
+            }
+
+            return container;
+        }
+
+        function escapeHtml(value) {
+            return String(value)
+                .replaceAll('&', '&amp;')
+                .replaceAll('<', '&lt;')
+                .replaceAll('>', '&gt;')
+                .replaceAll('"', '&quot;')
+                .replaceAll("'", '&#039;');
+        }
+    })();
     </script>
-</body>
-</html>
-HTML;
+    HTML;
     }
 
     public function render()

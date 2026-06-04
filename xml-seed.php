@@ -18,21 +18,11 @@ $database = new Database();
 <head>
     <meta charset="UTF-8">
     <title>XML seed-дані ProHour</title>
-    <style>
-        body { font-family: Arial, sans-serif; padding: 24px; }
-        table { border-collapse: collapse; width: 100%; }
-        th { background: #f2f2f2; }
-        th, td { border: 1px solid #ccc; padding: 8px; vertical-align: top; }
-    </style>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/xml-seed.css">
 </head>
 <body>
     <h1>XML seed-дані ProHour</h1>
-    <p>
-        Ця сторінка демонструє виконання завдань 1-3 лабораторної роботи:
-        створення XML-парсера, реєстрацію обробників тегів і текстового вмісту,
-        запуск парсера та формування HTML-таблиці.
-    </p>
-
     <?= XmlSeedParser::renderHtmlTable($seedData); ?>
 </body>
 </html>

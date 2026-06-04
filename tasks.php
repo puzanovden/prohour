@@ -145,7 +145,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     }
     
-    if (isset($postExecuted) && $postExecuted === true) {
+if (isset($postExecuted) && $postExecuted === true) {
     $actionLabels = [
         'create' => 'Створення нового завдання',
         'play' => 'Запуск таймера трекінгу',
@@ -153,9 +153,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         'complete' => 'Маркування завдання як виконане',
         'delete' => 'Видалення завдання з бази даних',
         'edit' => 'Зміна назви завдання користувачем',
-        'scheduler_toggle' => 'Перемикання активності фонової служби',
-        'scheduler_schedule' => 'Оновлення часового тригера фонової служби',
-        'scheduler_rename' => 'Зміна системного імені служби автоматизації'
+        'scheduler_toggle' => 'Перемикання активності фонової задачі',
+        'scheduler_schedule' => 'Оновлення часового тригера фонової задачі',
+        'scheduler_rename' => 'Зміна системного імені фонової задачі'
     ];
 
     $currentActionText = $actionLabels[$action] ?? 'Системна операція';
@@ -172,6 +172,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         'task_id' => $taskId ?: '',
         'scheduler_task' => $cronTaskName ?: '',
     ]);
+
+    $_SESSION['pending_notification'] = [
+        'action' => $action,
+        'description' => $currentActionText,
+        'task_id' => $taskId ?: '',
+    ];
 }
 
     if (strpos($action, 'scheduler_') === 0) {
