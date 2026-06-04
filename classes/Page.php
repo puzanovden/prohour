@@ -23,13 +23,14 @@ class Page
                 $userLetter = $matches[0] ?? '?';
 
                 $userPanel = "
-                    <div class=\"user-panel\">
-                        <a href=\"tasks.php\" class=\"user-status\">$userName</a>
-                        <a href=\"chat.php\" class=\"logout-link\">Чат</a>
-                        <div class=\"user-avatar\">$userLetter</div>
-                        <a href=\"logout.php\" class=\"logout-link\">Вийти</a>
-                    </div>
-                ";
+                <div class=\"user-panel\">
+                    <a href=\"tasks.php\" class=\"user-status\">$userName</a>
+                    <a href=\"app.php?route=analytics\" class=\"logout-link\">MVC</a>
+                    <a href=\"chat.php\" class=\"logout-link\">Чат</a>
+                    <div class=\"user-avatar\">$userLetter</div>
+                    <a href=\"logout.php\" class=\"logout-link\">Вийти</a>
+                </div>
+            ";
             } else {
                 $userPanel = "
                     <div class=\"user-panel\">
