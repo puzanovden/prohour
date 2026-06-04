@@ -23,16 +23,19 @@ require_once "classes/Translator.php";
 require_once "classes/Database.php";
 require_once "classes/TaskRepository.php";
 require_once "classes/RegexHelper.php";
+require_once "classes/TaskActionDomLogger.php";
 
 use App\Database\Database;
 use App\Repositories\TaskRepository;
 use App\Utils\RegexHelper;
+use App\Services\TaskActionDomLogger;
 
 $translator = new Translator($currentLang);
 
 $db = new Database();
 $dbConnection = $db->getConnection();
 $taskRepository = new TaskRepository($dbConnection);
+$taskActionDomLogger = new TaskActionDomLogger(__DIR__ . '/data/task-actions.xml');
 
 if (!file_exists('scheduler.txt')) {
     file_put_contents('scheduler.txt', "AutoBackupTask=02:00\nSendEmailReports=08:30\nSystemCleanUpTask=00:00");
@@ -77,8 +80,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     if ($action === 'create' && !empty($_POST['task_name'])) {
-        $stmt = $dbConnection->prepare("INSERT INTO tasks (name, status, accumulated_time, last_started_at) VALUES (:name, 'paused', 0, 0)");
-        $stmt->execute([':name' => htmlspecialchars($_POST['task_name'])]);
+        $stmt = $dbConnection->prepare(
+            "INSERT INTO tasks (user_id, name, status, accumulated_time, last_started_at)
+            VALUES (:user_id, :name, 'paused', 0, 0)"
+        );
+
+        $stmt->execute([
+            ':user_id' => $_SESSION['user_id'],
+            ':name' => htmlspecialchars($_POST['task_name'], ENT_QUOTES, 'UTF-8')
+        ]);
+
+        $taskId = $dbConnection->lastInsertId();
         $postExecuted = true;
     }
 
@@ -134,22 +146,33 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
     
     if (isset($postExecuted) && $postExecuted === true) {
-        $actionLabels = [
-            'create' => 'Створення нового завдання',
-            'play' => 'Запуск таймера трекінгу',
-            'pause' => 'Зупинка таймера (Пауза)',
-            'complete' => 'Маркування завдання як виконане',
-            'delete' => 'Видалення завдання з бази даних',
-            'edit' => 'Зміна назви завдання користувачем',
-            'scheduler_toggle' => 'Перемикання активності фонової служби',
-            'scheduler_schedule' => 'Оновлення часового тригера фонової служби',
-            'scheduler_rename' => 'Зміна системного імені служби автоматизації'
-        ];
-        
-        $currentActionText = $actionLabels[$action] ?? 'Системна операція';
-        $logLine = "[" . date('Y-m-d H:i:s') . "] " . $currentActionText . "\n";
-        file_put_contents('log.txt', $logLine, FILE_APPEND);
-    }
+    $actionLabels = [
+        'create' => 'Створення нового завдання',
+        'play' => 'Запуск таймера трекінгу',
+        'pause' => 'Зупинка таймера (Пауза)',
+        'complete' => 'Маркування завдання як виконане',
+        'delete' => 'Видалення завдання з бази даних',
+        'edit' => 'Зміна назви завдання користувачем',
+        'scheduler_toggle' => 'Перемикання активності фонової служби',
+        'scheduler_schedule' => 'Оновлення часового тригера фонової служби',
+        'scheduler_rename' => 'Зміна системного імені служби автоматизації'
+    ];
+
+    $currentActionText = $actionLabels[$action] ?? 'Системна операція';
+
+    $logLine = "[" . date('Y-m-d H:i:s') . "] " . $currentActionText . "\n";
+    file_put_contents('log.txt', $logLine, FILE_APPEND);
+
+    $taskActionDomLogger->log([
+        'type' => $action,
+        'description' => $currentActionText,
+        'user_id' => $_SESSION['user_id'] ?? '',
+        'user_name' => $_SESSION['user_name'] ?? '',
+        'user_email' => $_SESSION['user_email'] ?? '',
+        'task_id' => $taskId ?: '',
+        'scheduler_task' => $cronTaskName ?: '',
+    ]);
+}
 
     if (strpos($action, 'scheduler_') === 0) {
         header("Location: tasks.php#scheduler");
