@@ -4,8 +4,18 @@
 node_modules/
 vendor/
 
+config.php
+
+seed-demo.php
+seed-demo-parallel.php
+reset-all.php
+clear-users.php
 *.log
 *.tmp
+
+
+
+certs/cacert.pem
 
 .DS_Store
 data/task-actions.xml

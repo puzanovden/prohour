@@ -15,3 +15,8 @@
 # SendEmailNotification=disabled
 SendEmailNotification=23:59
 # DatabaseAutoBackup=disabled
+SendDailyEmailReports=03:00
+ClearExpiredUserSessions=18:04
+# DatabaseAutoBackup=disabled
+# DatabaseAutoBackup=disabled
+DatabaseAutoBackup=18:00

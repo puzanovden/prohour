@@ -1,6 +1,17 @@
 <?php
 
 session_start();
+
+if (isset($_GET['lang'])) {
+    $_SESSION['lang'] = $_GET['lang'];
+
+    $route = $_GET['route'] ?? 'analytics';
+    $date = $_GET['date'] ?? date('Y-m-d');
+
+    header("Location: app.php?route={$route}&date={$date}");
+    exit;
+}
+
 date_default_timezone_set('Europe/Kyiv');
 
 require_once __DIR__ . '/classes/bootstrap.php';

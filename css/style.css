@@ -62,7 +62,7 @@ header{
 }
 
 .logo img{
-    height:75px;
+    height:55px;
     width:auto;
     object-fit:contain;
 }
@@ -751,4 +751,23 @@ footer{
     margin-top: 10px;
     max-width: 380px;
     font-family: Arial, sans-serif;
+}
+
+---ава
+
+.header-avatar-link {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
+}
+
+.header-avatar-img {
+    width: 52px;
+    height: 52px;
+    border-radius: 50%;
+    object-fit: cover;
+    display: block;
+    box-shadow: 0 12px 28px rgba(255, 127, 80, 0.28);
+    border: 3px solid rgba(255, 255, 255, 0.9);
 }

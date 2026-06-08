@@ -12,13 +12,14 @@ class ProHourWebSocketServer implements MessageComponentInterface
     private SplObjectStorage $clients;
 
     /**
-     * userId => ConnectionInterface
+     * userId => array<resourceId, ConnectionInterface>
      */
     private array $users = [];
 
     public function __construct()
     {
         $this->clients = new SplObjectStorage();
+
         echo "ProHour WebSocket server started\n";
     }
 
@@ -28,6 +29,7 @@ class ProHourWebSocketServer implements MessageComponentInterface
             'user_id' => null,
             'user_name' => null,
             'user_email' => null,
+            'user_avatar' => null,
         ]);
 
         echo "New connection: {$conn->resourceId}\n";
@@ -41,6 +43,7 @@ class ProHourWebSocketServer implements MessageComponentInterface
             $this->sendJson($from, [
                 'type' => 'error',
                 'message' => 'Некоректний формат повідомлення.',
+                'created_at' => date('c'),
             ]);
 
             return;
@@ -55,6 +58,10 @@ class ProHourWebSocketServer implements MessageComponentInterface
                 $this->handlePrivateMessage($from, $data);
                 break;
 
+            case 'team_message':
+                $this->handleTeamMessage($from, $data);
+                break;
+
             case 'task_notification':
                 $this->handleTaskNotification($from, $data);
                 break;
@@ -63,6 +70,7 @@ class ProHourWebSocketServer implements MessageComponentInterface
                 $this->sendJson($from, [
                     'type' => 'error',
                     'message' => 'Невідомий тип повідомлення.',
+                    'created_at' => date('c'),
                 ]);
         }
     }
@@ -73,7 +81,8 @@ class ProHourWebSocketServer implements MessageComponentInterface
 
         if ($clientData && !empty($clientData['user_id'])) {
             $userId = (string)$clientData['user_id'];
-            unset($this->users[$userId]);
+
+            $this->removeUserConnection($userId, $conn);
 
             $this->broadcast([
                 'type' => 'system',
@@ -90,6 +99,7 @@ class ProHourWebSocketServer implements MessageComponentInterface
     public function onError(ConnectionInterface $conn, Throwable $e): void
     {
         echo "WebSocket error: {$e->getMessage()}\n";
+
         $conn->close();
     }
 
@@ -98,11 +108,13 @@ class ProHourWebSocketServer implements MessageComponentInterface
         $userId = trim((string)($data['user_id'] ?? ''));
         $userName = trim((string)($data['user_name'] ?? ''));
         $userEmail = trim((string)($data['user_email'] ?? ''));
+        $userAvatar = trim((string)($data['user_avatar'] ?? ''));
 
         if ($userId === '' || $userName === '') {
             $this->sendJson($conn, [
                 'type' => 'error',
                 'message' => 'Неможливо авторизувати WebSocket-клієнт.',
+                'created_at' => date('c'),
             ]);
 
             return;
@@ -112,9 +124,10 @@ class ProHourWebSocketServer implements MessageComponentInterface
             'user_id' => $userId,
             'user_name' => $userName,
             'user_email' => $userEmail,
+            'user_avatar' => $userAvatar,
         ];
 
-        $this->users[$userId] = $conn;
+        $this->users[$userId][$conn->resourceId] = $conn;
 
         $this->sendJson($conn, [
             'type' => 'auth_success',
@@ -131,16 +144,17 @@ class ProHourWebSocketServer implements MessageComponentInterface
 
     private function handlePrivateMessage(ConnectionInterface $from, array $data): void
     {
-        $sender = $this->clients[$from] ?? null;
-
         if (!$this->isAuthenticated($from)) {
             $this->sendJson($from, [
                 'type' => 'error',
                 'message' => 'Спочатку потрібно авторизувати WebSocket-клієнт.',
+                'created_at' => date('c'),
             ]);
 
             return;
         }
+
+        $sender = $this->clients[$from];
 
         $toUserId = trim((string)($data['to_user_id'] ?? ''));
         $messageText = trim((string)($data['message'] ?? ''));
@@ -149,27 +163,75 @@ class ProHourWebSocketServer implements MessageComponentInterface
             $this->sendJson($from, [
                 'type' => 'error',
                 'message' => 'Оберіть отримувача і введіть повідомлення.',
+                'created_at' => date('c'),
             ]);
 
             return;
         }
+
+        $createdAt = date('c');
 
         $message = [
             'type' => 'private_message',
             'from_user_id' => $sender['user_id'],
             'from_user_name' => $sender['user_name'],
             'from_user_email' => $sender['user_email'],
+            'from_user_avatar' => $sender['user_avatar'] ?? '',
             'to_user_id' => $toUserId,
+            'message' => $messageText,
+            'created_at' => $createdAt,
+        ];
+
+        $this->sendToUser($toUserId, $message);
+
+        $ownMessage = $message;
+        $ownMessage['is_own'] = true;
+
+        $this->sendJson($from, $ownMessage);
+    }
+
+    private function handleTeamMessage(ConnectionInterface $from, array $data): void
+    {
+        if (!$this->isAuthenticated($from)) {
+            $this->sendJson($from, [
+                'type' => 'error',
+                'message' => 'Спочатку потрібно авторизувати WebSocket-клієнт.',
+                'created_at' => date('c'),
+            ]);
+
+            return;
+        }
+
+        $sender = $this->clients[$from];
+
+        $messageText = trim((string)($data['message'] ?? ''));
+
+        if ($messageText === '') {
+            $this->sendJson($from, [
+                'type' => 'error',
+                'message' => 'Введіть повідомлення.',
+                'created_at' => date('c'),
+            ]);
+
+            return;
+        }
+
+        $message = [
+            'type' => 'team_message',
+            'from_user_id' => $sender['user_id'],
+            'from_user_name' => $sender['user_name'],
+            'from_user_email' => $sender['user_email'],
+            'from_user_avatar' => $sender['user_avatar'] ?? '',
             'message' => $messageText,
             'created_at' => date('c'),
         ];
 
-        if (isset($this->users[$toUserId])) {
-            $this->sendJson($this->users[$toUserId], $message);
-        }
+        $this->broadcast($message, $from);
 
-        $message['is_own'] = true;
-        $this->sendJson($from, $message);
+        $ownMessage = $message;
+        $ownMessage['is_own'] = true;
+
+        $this->sendJson($from, $ownMessage);
     }
 
     private function handleTaskNotification(ConnectionInterface $from, array $data): void
@@ -199,6 +261,30 @@ class ProHourWebSocketServer implements MessageComponentInterface
         $clientData = $this->clients[$conn] ?? null;
 
         return is_array($clientData) && !empty($clientData['user_id']);
+    }
+
+    private function sendToUser(string $userId, array $payload): void
+    {
+        if (empty($this->users[$userId])) {
+            return;
+        }
+
+        foreach ($this->users[$userId] as $connection) {
+            $this->sendJson($connection, $payload);
+        }
+    }
+
+    private function removeUserConnection(string $userId, ConnectionInterface $conn): void
+    {
+        if (empty($this->users[$userId])) {
+            return;
+        }
+
+        unset($this->users[$userId][$conn->resourceId]);
+
+        if (empty($this->users[$userId])) {
+            unset($this->users[$userId]);
+        }
     }
 
     private function broadcast(array $payload, ?ConnectionInterface $except = null): void
