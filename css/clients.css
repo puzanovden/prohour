@@ -1,0 +1,73 @@
+.clients-form {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.clients-form-wide {
+    grid-column: 1 / -1;
+}
+
+.clients-form button {
+    width: fit-content;
+}
+
+.clients-table-description {
+    display: block;
+    margin-top: 5px;
+    color: #64748b;
+    font-size: 13px;
+    line-height: 1.4;
+}
+
+.clients-inline-form {
+    margin: 0;
+}
+
+.clients-delete-btn {
+    padding: 9px 12px;
+    border: none;
+    border-radius: 999px;
+    background: #fee2e2;
+    color: #b91c1c;
+    font-weight: 900;
+    cursor: pointer;
+}
+
+.clients-delete-btn:hover {
+    background: #fecaca;
+}
+
+.clients-empty {
+    margin: 0;
+    padding: 18px;
+    border-radius: 18px;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    color: #64748b;
+}
+
+.clients-alert-error {
+    display: grid;
+    gap: 4px;
+    margin-bottom: 22px;
+    padding: 16px 18px;
+    border-radius: 18px;
+    background: #fef2f2;
+    color: #991b1b;
+    border: 1px solid #fecaca;
+}
+
+.clients-table th:last-child,
+.clients-table td:last-child {
+    width: 120px;
+    min-width: 120px;
+}
+
+@media (max-width: 900px) {
+    .clients-form {
+        grid-template-columns: 1fr;
+    }
+
+    .clients-form button {
+        width: 100%;
+    }
+}

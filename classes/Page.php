@@ -11,80 +11,116 @@ class Page
         $this->t = $t;
     }
 
-    public function renderHeader()
-    {
-        $activeUa = $this->t->getLang() === 'uk' ? 'active' : '';
-        $activeEn = $this->t->getLang() === 'en' ? 'active' : '';
+public function renderHeader()
+{
+    $activeUa = $this->t->getLang() === 'uk' ? 'active' : '';
+    $activeEn = $this->t->getLang() === 'en' ? 'active' : '';
 
-        //☺
-        if (isset($_SESSION['user_id'])) {
-                $userName = $_SESSION['user_name'] ?? 'User';
-                preg_match('/^./u', $userName, $matches);
-                $userLetter = $matches[0] ?? '?';
+    $currentFile = basename($_SERVER['PHP_SELF']);
+    $currentRoute = $_GET['route'] ?? '';
 
-                $userPanel = "
-                <div class=\"user-panel\">
-                    <a href=\"tasks.php\" class=\"user-status\">$userName</a>
-                    <a href=\"app.php?route=analytics\" class=\"logout-link\">MVC</a>
-                    <a href=\"chat.php\" class=\"logout-link\">Чат</a>
-                    <div class=\"user-avatar\">$userLetter</div>
-                    <a href=\"logout.php\" class=\"logout-link\">Вийти</a>
-                </div>
-            ";
-            } else {
-                $userPanel = "
-                    <div class=\"user-panel\">
-                        <a href=\"login.php\" class=\"user-status\">Увійти</a>
-                        <div class=\"user-avatar\">?</div>
-                    </div>
-                ";
-            }
-            //☺
+    $isTasks = $currentFile === 'tasks.php' ? 'active' : '';
+    $isClients = $currentFile === 'clients.php' ? 'active' : '';
+    $isProjects = $currentFile === 'projects.php' ? 'active' : '';
+    $isScheduler = $currentFile === 'scheduler.php' ? 'active' : '';
+    $isChat = $currentFile === 'chat.php' ? 'active' : '';
+    $isProfile = $currentFile === 'profile.php' ? 'active' : '';
+    $isAnalytics = ($currentFile === 'app.php' && $currentRoute === 'analytics') ? 'active' : '';
 
-        echo <<<HTML
-<!DOCTYPE html>
-<html lang="uk">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{$this->title}</title>
-    <link rel="stylesheet" href="css/style.css">
-</head>
-<body id="for-whom">
-    <div class="bg-blur blur-1"></div>
-    <div class="bg-blur blur-2"></div>
+    if (isset($_SESSION['user_id'])) {
+        $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User', ENT_QUOTES, 'UTF-8');
+        $userAvatarPath = $_SESSION['user_avatar'] ?? '';
 
-    <header>
-        <a href="index.php" class="logo">
-            <img src="img/logo.png" alt="ProHour">
-        </a>
+        if (!empty($userAvatarPath)) {
+            $safeAvatarPath = htmlspecialchars($userAvatarPath, ENT_QUOTES, 'UTF-8');
+            $userAvatarHtml = "<img src=\"{$safeAvatarPath}\" alt=\"Аватар\" class=\"mvc-header-avatar-img\">";
+        } else {
+            preg_match('/^./u', $userName, $matches);
+            $userLetter = htmlspecialchars($matches[0] ?? '?', ENT_QUOTES, 'UTF-8');
+            $userAvatarHtml = "<span>{$userLetter}</span>";
+        }
 
-        <nav>
+
+        $isAdmin = $currentFile === 'admin.php' ? 'active' : '';
+
+        $adminNavLink = '';
+
+        if (($_SESSION['user_role'] ?? '') === 'admin') {
+            $adminNavLink = "<a href=\"admin.php\" class=\"{$isAdmin}\">Адмін</a>";
+        }
+        $nav = <<<HTML
+        <nav class="mvc-nav">
+            <a href="tasks.php" class="{$isTasks}">Задачі</a>
+            <a href="clients.php" class="{$isClients}">Клієнти</a>
+            <a href="projects.php" class="{$isProjects}">Проєкти</a>
+            <a href="app.php?route=analytics" class="{$isAnalytics}">Аналітика</a>
+            <a href="scheduler.php" class="{$isScheduler}">Автоматизація</a>
+            <a href="chat.php" class="{$isChat}">Чат</a>
+            {$adminNavLink}
+        </nav>
+        HTML;
+
+        $userPanel = <<<HTML
+        <div class="mvc-user-panel">
+            <a href="profile.php" class="{$isProfile}">{$userName}</a>
+            <a href="profile.php" class="mvc-header-avatar">{$userAvatarHtml}</a>
+            <a href="logout.php">Вийти</a>
+        </div>
+HTML;
+    } else {
+        $nav = <<<HTML
+        <nav class="mvc-nav">
             <a href="index.php#for-whom">{$this->t->get('nav_for_whom')}</a>
             <a href="index.php#features">{$this->t->get('nav_features')}</a>
             <a href="index.php#workflow">{$this->t->get('nav_how')}</a>
             <a href="index.php#analytics">{$this->t->get('nav_analytics')}</a>
         </nav>
+HTML;
 
-        <div class="lang-switch">
-            <a href="?lang=uk" class="lang-btn {$activeUa}">
-                <img src="img/ua.svg" alt="UA"> UA
-            </a>
-            <a href="?lang=en" class="lang-btn {$activeEn}">
-                <img src="img/gb.svg" alt="EN"> EN
-            </a>
+        $userPanel = <<<HTML
+        <div class="mvc-user-panel">
+            <a href="login.php">Увійти</a>
+            <a href="register.php" class="mvc-register-link">Реєстрація</a>
         </div>
-
-        {$userPanel}
-<!--         <div class="user-panel">
-                <a href="tasks.php" class="user-status">
-                    {$this->t->get('status_online')}
-                </a>
-            <div class="user-avatar">D</div>
-        </div> -->
-    </header>
 HTML;
     }
+
+    echo <<<HTML
+<!DOCTYPE html>
+<html lang="{$this->t->getLang()}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{$this->title}</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/mvc.css">
+</head>
+<body id="for-whom" class="mvc-body">
+    <div class="bg-blur blur-1"></div>
+    <div class="bg-blur blur-2"></div>
+
+    <header class="mvc-header">
+        <a href="index.php" class="mvc-logo">
+            <img src="img/logo.png" alt="ProHour">
+        </a>
+
+        {$nav}
+
+        <div class="mvc-header-actions">
+            <div class="lang-switch mvc-lang-switch">
+                <a href="?lang=uk" class="lang-btn {$activeUa}">
+                    <img src="img/ua.svg" alt="UA"> UA
+                </a>
+                <a href="?lang=en" class="lang-btn {$activeEn}">
+                    <img src="img/gb.svg" alt="EN"> EN
+                </a>
+            </div>
+
+            {$userPanel}
+        </div>
+    </header>
+HTML;
+}
     
     public function renderBody()
     {
